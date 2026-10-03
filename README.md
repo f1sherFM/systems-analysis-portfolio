@@ -15,7 +15,7 @@
 | # | Кейс | Тип | Что внутри |
 |---|------|-----|-----------|
 | 1 | [Team Task Manager: ретроспективный анализ](docs/01-team-task-manager/README.md) | Реальный проект (мой backend) | Роли и права, FR/NFR, user stories + acceptance criteria, ER, state-диаграммы, sequence, фрагмент API-контракта, тест-кейсы |
-| 2 | [Система заявок на ТОиР (нефтегаз)](docs/02-maintenance-requests/README.md) | Учебный, гипотетический | AS-IS / TO-BE, стейкхолдеры, процесс, требования, ER, статусы, интеграции, API, тест-кейсы, риски и открытые вопросы |
+| 2 | [Система заявок на ТОиР (нефтегаз)](docs/02-cmms-maintenance/README.md) | Учебный, гипотетический | AS-IS / TO-BE, стейкхолдеры, процесс, требования, ER, статусы, интеграции, API, тест-кейсы, риски и открытые вопросы |
 
 ## Какие навыки показывает репозиторий
 
@@ -40,7 +40,7 @@ systems-analysis-portfolio/
 └── docs/
     ├── 01-team-task-manager/
     │   └── README.md
-    └── 02-maintenance-requests/
+    └── 02-cmms-maintenance/
         └── README.md
 ```
 

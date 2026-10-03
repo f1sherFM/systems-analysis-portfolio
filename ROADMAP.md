@@ -5,9 +5,9 @@
 ## Ближайшие
 
 - [ ] Сверить допущения в кейсе 1 с реальным кодом (`core/permissions.py`, модели `tasks`, `workspaces`, `projects`).
-- [ ] Добавить экспорт диаграмм кейса 2 в `.bpmn` (Camunda Modeler / bpmn.io) в папку `docs/02-maintenance-requests/diagrams/`.
+- [ ] Добавить экспорт диаграмм кейса 2 в `.bpmn` (Camunda Modeler / bpmn.io) в папку `docs/02-cmms-maintenance/diagrams/`.
 - [ ] Добавить прототип экранов кейса 2 (Figma или Excalidraw) и ссылку в README кейса.
-- [ ] Подготовить OpenAPI-спецификацию кейса 2 в `docs/02-maintenance-requests/openapi.yaml`.
+- [ ] Подготовить OpenAPI-спецификацию кейса 2 в `docs/02-cmms-maintenance/openapi.yaml`.
 
 ## Дальше
 
