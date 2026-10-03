@@ -2,9 +2,10 @@
 
 > Портфолио начинающего системного аналитика: требования, процессы, модели данных, API-контракты и тестовые сценарии на реальном и учебном материале.
 
-**Автор:** Кирилл ([@f1sherFM](https://github.com/f1sherFM)) · Сургут · студент 2 курса, ИСиП  
-**Бэкграунд:** Python / backend с 14 лет, open source и коммерческие проекты  
-**Ищу:** практику / стажировку на позиции junior системного аналитика (IT, телеком, нефтегаз)
+## Об авторе
+
+Кирилл. Разработчик с опытом Python/backend, open source и коммерческих проектов.
+Развиваюсь в системном анализе: требования, процессы, данные и API.
 
 *English summary: a portfolio of systems analysis artifacts (requirements, BPMN-style flows, ER/state/sequence diagrams, API contracts, acceptance criteria, test cases) built on a real backend project and one hypothetical industrial case.*
 
