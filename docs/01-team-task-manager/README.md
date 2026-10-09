@@ -1,10 +1,10 @@
 # Кейс 1. Team Task Manager: ретроспективный системный анализ
 
-**Тип:** реальный pet/commercial-style backend-проект автора  
-**Репозиторий проекта:** [f1sherFM/Team_Task_Manager](https://github.com/f1sherFM/Team_Task_Manager)  
+**Тип:** реальный backend-проект автора (Django 5 + DRF)  
+**Репозиторий проекта:** [f1sherFM/Team_Task_Manager](https://github.com/f1sherFM/Team_Task_Manager) — код, тесты и CI открыты  
 **Что сделано:** по готовому коду и README описана система так, как это делал бы системный аналитик на этапе проектирования: роли, требования, модели, контракты, тесты.
 
-> **Важно.** Документ составлен ретроспективно по README проекта. Всё, что README не подтверждает напрямую (точные права ролей, список статусов, поля моделей), помечено как **Допущение** и должно быть сверено с кодом. Список в конце документа.
+> **Важно.** Ключевые артефакты — матрица прав, модель данных, жизненные циклы и контракт bulk-update — сверены с фактическим кодом (`core/permissions.py`, `*/models.py`, `*/services.py`, `api/serializers.py`, тесты). Оставшиеся неподтверждённые пункты явно помечены как **Допущение**; список открытых вопросов — в конце документа.
 
 ---
 
@@ -36,24 +36,28 @@ Team Task Manager (TTM) — backend-first SaaS для командной раб�
 
 Наличие ролей `owner`, `admin`, `member`, явной передачи владения, приглашений и агентного слоя подтверждено README.
 
-### Матрица прав (целевая модель)
+### Матрица прав (подтверждена кодом)
 
 Сверено по `core/permissions.py` и сервисам `workspaces`, `projects`, `tasks`, `comments`.
 
 | Действие | owner | admin | member |
 |---|:-:|:-:|:-:|
 | Создать приглашение / отозвать | да | да | нет |
-| Изменить роль участника | да (кроме owner) | да (только текущий member) | нет |
-| Удалить участника | да (кроме owner) | да (только текущий member) | нет |
-| Передать владение | да | нет | нет |
+| Изменить роль участника | да (кроме своего owner-членства) | да (только member) | нет |
+| Удалить участника | да (кроме себя как owner) | да (только member) | нет |
+| Передать владение / удалить workspace | да | нет | нет |
 | Создать / архивировать проект | да | да | нет |
-| Создать задачу | да | да | да |
+| Создать задачу и редактировать её поля | да | да | да |
 | Сменить статус задачи | да | да | да (только если назначена ему) |
 | Назначить исполнителя задачи | да | да | нет |
 | Удалить свой комментарий | да | да | да |
 | Удалить чужой комментарий | да | да | нет |
 
-Примечание: создание и изменение задач, а также удаление комментариев дополнительно требуют, чтобы проект не был архивным (`is_project_writable`).
+Примечания, подтверждённые кодом:
+
+- Создание/изменение задач, комментарии и удаление комментариев дополнительно требуют, чтобы проект не был архивным (`is_project_writable`).
+- Редактирование полей задачи (`can_update_task`) доступно любому участнику проекта; ограничение по ролям действует точечно — только на смену статуса (`can_change_task_status`) и назначение исполнителя (`can_assign_task`).
+- Приглашение нельзя принять повторно (`accepted_at`), просроченное приглашение (`expires_at`, по умолчанию 7 дней) отклоняется; отзыв принятых приглашений запрещён.
 
 ## 3. Бизнес-требования
 
@@ -86,13 +90,13 @@ Team Task Manager (TTM) — backend-first SaaS для командной раб�
 
 | ID | Категория | Требование | Основание |
 |---|---|---|---|
-| NFR-1 | Тестируемость | Суммарное покрытие тестами не ниже 85% | CI в README |
-| NFR-2 | Эксплуатация | Liveness-проба не зависит от БД; readiness проверяет доступ к БД и неприменённые миграции | README |
+| NFR-1 | Тестируемость | Суммарное покрытие тестами не ниже 85% | CI: `coverage report --fail-under=85` (`.github/workflows/ci.yml`) |
+| NFR-2 | Эксплуатация | Liveness (`/healthz/`) не зависит от БД; readiness (`/readyz/`) проверяет доступ к БД и неприменённые миграции, при ошибке отвечает 503 | `core/health.py`, `core/views.py` |
 | NFR-3 | Безопасность | Прод-режим: HTTPS-редирект, secure cookies, HSTS, trusted origins настраиваются переменными окружения | README |
 | NFR-4 | Целостность | Многошаговые изменения выполняются атомарно (`transaction.atomic()`) | README: Architecture |
 | NFR-5 | Сопровождаемость | Бизнес-логика только в сервисах, чтение в селекторах, права в одном модуле | README |
 | NFR-6 | Переносимость | PostgreSQL как основная БД, SQLite как запасной вариант для разработки; запуск в Docker и на Render | README |
-| NFR-7 | Производительность | **Допущение:** список задач проекта отдаётся за разумное время при росте данных; нужна пагинация и индексы по фильтруемым полям | Гипотеза |
+| NFR-7 | Производительность | Списки задач отдаются с пагинацией (`PageNumberPagination` в настройках DRF); индексы на фильтруемых полях: `tasks(project, status)`, `activity(workspace, -created_at)`, уникальные ограничения по slug. Порог времени отклика не задан — **Допущение/открытый вопрос** | `team_task_manager/settings.py`, `Meta.indexes` моделей |
 
 ## 6. User stories и acceptance criteria
 
@@ -102,8 +106,8 @@ Team Task Manager (TTM) — backend-first SaaS для командной раб�
 
 - **Given** я `admin` workspace и ввёл корректный идентификатор приглашаемого, **When** я создаю приглашение, **Then** система создаёт приглашение с токеном и записывает событие в журнал активности.
 - **Given** у приглашения валидный токен, **When** приглашённый принимает его, **Then** он становится участником с назначенной ролью.
-- **Given** приглашение отозвано, **When** приглашённый пытается принять его, **Then** система отказывает и не создаёт членство.
-- **Given** я `member`, **When** я пытаюсь создать приглашение, **Then** система возвращает отказ в доступе (**Допущение:** по матрице прав).
+- **Given** приглашение отозвано (или срок `expires_at` истёк), **When** приглашённый пытается принять его, **Then** система отказывает и не создаёт членство (подтверждено: `accept_invitation`, отзыв выполняет физическое удаление записи).
+- **Given** я `member`, **When** я пытаюсь создать приглашение, **Then** система возвращает отказ в доступе (подтверждено: `can_manage_invitations`).
 
 ### US-2. Работа с архивным проектом
 
@@ -132,9 +136,9 @@ Team Task Manager (TTM) — backend-first SaaS для командной раб�
 - **Given** я автор комментария, **When** я удаляю его, **Then** комментарий помечается удалённым, но остаётся в базе.
 - **Given** фильтр `is_deleted=false`, **When** запрашивается список комментариев, **Then** удалённые не возвращаются.
 
-## 7. Модель данных (концептуальная)
+## 7. Модель данных (подтверждена кодом)
 
-**Допущение:** набор сущностей и связей восстановлен по README и названиям доменных приложений. Атрибуты показаны только ключевые, точные поля сверить с моделями.
+Поля и ограничения взяты из `accounts/models.py`, `workspaces/models.py`, `projects/models.py`, `tasks/models.py`, `comments/models.py`, `activity/models.py`; показаны ключевые атрибуты.
 
 ```mermaid
 erDiagram
@@ -142,51 +146,61 @@ erDiagram
     USER ||--o{ MEMBERSHIP : joins
     WORKSPACE ||--o{ MEMBERSHIP : contains
     WORKSPACE ||--o{ INVITATION : issues
+    USER ||--o{ INVITATION : invited_by
     WORKSPACE ||--o{ PROJECT : owns
     PROJECT ||--o{ TASK : contains
     USER ||--o{ TASK : assigned_to
     TASK ||--o{ COMMENT : has
     USER ||--o{ COMMENT : writes
-    WORKSPACE ||--o{ ACTIVITY : logs
+    WORKSPACE ||--o{ ACTIVITYLOG : logs
 
     WORKSPACE {
         int id PK
         string name
-        string slug
+        string slug UK
+        int owner_id FK "PROTECT"
     }
     MEMBERSHIP {
         int id PK
-        string role
+        string role "owner admin member"
+        datetime joined_at
+        unique_workspace_user "уникальность workspace+user"
     }
     INVITATION {
-        int id PK
-        string token
-        string status
+        uuid token UK
+        string email
+        string role
+        datetime expires_at "по умолчанию +7 дней"
+        datetime accepted_at "null = активна"
+        unique_workspace_email
     }
     PROJECT {
         int id PK
         string name
-        string slug
+        string slug "уникален в workspace"
         bool is_archived
     }
     TASK {
         int id PK
         string title
-        string slug
-        string status
-        string priority
+        string slug "уникален в проекте"
+        string status "todo in_progress done"
+        string priority "low medium high"
         date due_date
+        int assignee_id FK "SET_NULL"
     }
     COMMENT {
         int id PK
         text body
         bool is_deleted
     }
-    ACTIVITY {
+    ACTIVITYLOG {
         int id PK
         string action
         string target_type
-        datetime created_at
+        string target_id
+        json metadata
+        datetime created_at "append-only: save() с pk блокируется"
     }
 ```
 
@@ -228,15 +242,15 @@ stateDiagram-v2
 
 ### Жизненный цикл приглашения
 
-**Допущение:** состав состояний гипотетический.
+Подтверждено кодом: отдельного поля `status` у приглашения нет — состояние выводится из `accepted_at` и `expires_at`; отзыв выполняет физическое удаление записи (`revoke_invitation`).
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Pending : создано
-    Pending --> Accepted : принято по токену
-    Pending --> Revoked : отозвано
+    [*] --> Pending : создано (expires_at = now + 7 дней)
+    Pending --> Accepted : принято по токену (accepted_at заполняется)
+    Pending --> Expired : срок истёк (проверка при попытке принять)
+    Pending --> [*] : отозвано (физическое удаление записи)
     Accepted --> [*]
-    Revoked --> [*]
 ```
 
 ### Смена статуса задачи через API
@@ -268,11 +282,11 @@ sequenceDiagram
 
 ## 9. Фрагмент API-контракта
 
-Эндпоинт и фильтры подтверждены README; тело ответа и коды ошибок — **Допущение** (типичное поведение DRF), проверить по Swagger проекта на `/api/docs/`.
+Эндпоинт, поля запроса и поведение подтверждены кодом (`api/urls.py`, `TaskBulkUpdateSerializer`, `bulk_update_tasks`); точные тела ответов — **Допущение**, сверить по Swagger проекта на `/api/docs/`.
 
 ### `POST /api/tasks/bulk-update/`
 
-Массовое обновление статуса и/или исполнителя у нескольких задач одного проекта.
+Массовое обновление полей (статус, исполнитель и др.) у нескольких задач одного проекта.
 
 **Запрос**
 
@@ -324,19 +338,43 @@ sequenceDiagram
 | TC-13 | FR-8 | Bulk update с ошибкой внутри batch (например, запрещённое назначение) | Транзакция откатывается, ни одна задача не сохраняет частичное изменение |
 | TC-10 | FR-12 | Остановить БД и вызвать `/healthz/` и `/readyz/` | `healthz` отвечает, `readyz` сигнализирует о проблеме |
 
+### Покрытие тестами из репозитория
+
+Сценарии реализованы как автотесты прямо в коде проекта (`tasks/tests.py`, `api/tests.py`, `core/tests.py`) — трассировка «требование → тест → код» замкнута:
+
+| Тест-кейс (документ) | Реализация в коде |
+|---|---|
+| TC-1 / TC-2 (приглашения) | `test_invitation_accept_api_creates_membership`, `test_admin_can_create_workspace_invitation_via_api`, `test_member_cannot_create_workspace_invitation_via_api` |
+| TC-4 / TC-5 / TC-12 (архивный проект) | `test_cannot_create_task_in_archived_project`, `test_archived_project_rejects_task_patch_via_api`, `test_admin_can_archive_and_restore_project_via_api` |
+| TC-6 / TC-11 (права смены статуса) | `test_assignee_can_change_status`, `test_non_assignee_member_cannot_change_status`, `test_assignee_can_change_task_status_via_api` |
+| TC-13 (bulk update «всё или ничего») | `test_member_bulk_update_rolls_back_when_assignment_is_forbidden`, `test_admin_can_bulk_assign_and_close_tasks` |
+| TC-10 (health/readiness) | `test_readiness_status_reports_error_when_dependency_fails` |
+| NFR-1 (покрытие ≥ 85%) | CI-гейт `coverage report --fail-under=85` |
+
 ## 11. Допущения и открытые вопросы
 
-| # | Что нужно проверить | Где смотреть |
-|---|---|---|
-| 1 | Фактическая матрица прав по ролям | `core/permissions.py` |
-| 2 | Подтверждено: статусы `todo`/`in_progress`/`done` (`tasks/models.py`). Переходы между статусами не ограничены (`change_task_status`). Открытый вопрос: нужна ли бизнес-матрица переходов | `tasks/models.py`, `tasks/services.py` |
-| 3 | Состояния приглашения | `workspaces/models.py` |
-| 4 | Реальные поля моделей для ER-диаграммы | модели всех доменных приложений |
-| 5 | Тела ответов и коды ошибок API | Swagger `/api/docs/`, `/api/schema/` |
-| 6 | Подтверждено: bulk update выполняется как «всё или ничего» (`@transaction.atomic` на `bulk_update_tasks`); неизвестные slug не проходят валидацию до вызова сервиса | `tasks/services.py`, `api/serializers.py`, тесты |
+| # | Статус | Что проверено / что осталось | Где смотреть |
+|---|---|---|---|
+| 1 | ✅ Подтверждено кодом | Матрица прав восстановлена по `core/permissions.py` (см. раздел 2) | `core/permissions.py` |
+| 2 | ⚠️ Открытый вопрос | Статусы `todo`/`in_progress`/`done` подтверждены; переходы между статусами в коде не ограничены. Проектное решение: нужна ли бизнес-матрица допустимых переходов | `tasks/models.py`, `tasks/services.py` |
+| 3 | ✅ Подтверждено кодом | Состояния приглашения выводятся из `accepted_at`/`expires_at`; отзыв = физическое удаление (см. раздел 8) | `workspaces/models.py`, `workspaces/services.py` |
+| 4 | ✅ Подтверждено кодом | Поля моделей для ER-диаграммы взяты из фактических `models.py` (см. раздел 7) | `*/models.py` |
+| 5 | ❓ Осталось допустить | Тела ответов и точные коды ошибок API — типовое поведение DRF, сверить по Swagger `/api/docs/` | `api/views.py`, Swagger |
+| 6 | ✅ Подтверждено кодом | Bulk update — «всё или ничего» (`@transaction.atomic`); неизвестные slug отсекаются валидатором сериализатора | `tasks/services.py`, `api/serializers.py`, тесты |
 
 ## 12. Чему научил этот кейс
 
-- Требования, восстановленные из готового кода, быстро показывают пробелы: нет явной матрицы прав и диаграммы переходов статусов.
+- Требования, восстановленные из готового кода, быстро показывают пробелы: нет явной бизнес-матрицы допустимых переходов статусов задачи — код их не ограничивает.
 - Разделение сервисов, селекторов и прав в коде хорошо ложится на разделение «изменение / чтение / авторизация» в аналитической модели.
 - Для API без описанных ошибок аналитик обязан зафиксировать контракт ошибок отдельно.
+- Ретроспективная сверка документа с кодом дороже первичной записи: три «Допущения» (права member, поля Invitation, состав ER) оказались неверными или неточными и были исправлены по фактическим `models.py`/`permissions.py`.
+
+## 13. Артефакты и трассировка «документ → код»
+
+| Артефакт кейса | Файлы в репозитории проекта |
+|---|---|
+| Матрица прав (раздел 2) | `core/permissions.py` |
+| FR-7…FR-10 (задачи, журнал) | `tasks/services.py`, `activity/models.py` |
+| ER-диаграмма (раздел 7) | `accounts/models.py`, `workspaces/models.py`, `projects/models.py`, `tasks/models.py`, `comments/models.py`, `activity/models.py` |
+| API-контракт bulk-update (раздел 9) | `api/urls.py`, `api/views.py` (`TaskBulkUpdateAPIView`), `api/serializers.py` (`TaskBulkUpdateSerializer`) |
+| Тест-кейсы (раздел 10) | `tasks/tests.py`, `api/tests.py`, `core/tests.py`, CI-гейт покрытия `.github/workflows/ci.yml` |
