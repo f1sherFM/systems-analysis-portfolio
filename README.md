@@ -1,13 +1,12 @@
-# Systems Analysis & Architecture Portfolio
+# Backend Engineer & Systems Analyst Portfolio
 
-> Портфолио начинающего системного аналитика: требования, процессы, модели данных, API-контракты и тестовые сценарии на реальном и учебном материале.
+> Портфолио инженера, который умеет и спроектировать систему (требования, модели, контракты, SLO), и построить её руками (код, тесты, CI, прод). Фокус: backend на Python и системный анализ для промышленных/телеметрических систем.
 
 ## Об авторе
 
-Кирилл. Разработчик с опытом Python/backend, open source и коммерческих проектов.
-Развиваюсь в системном анализе: требования, процессы, данные и API.
+Кирилл. Backend-разработчик (Python), с открытым кодом в проде, плюс системный анализ: требования, процессы, модели данных, API-контракты, эксплуатационные SLA/SLO.
 
-*English summary: a portfolio of systems analysis artifacts (requirements, BPMN-style flows, ER/state/sequence diagrams, API contracts, acceptance criteria, test cases) built on a real backend project and one hypothetical industrial case.*
+*English summary: a portfolio combining production backend engineering (FastAPI/Django, tests, CI, deployment) with systems analysis artifacts (requirements, ER/state/sequence diagrams, API contracts, acceptance criteria, test cases, SLOs and runbooks).*
 
 ---
 
@@ -15,35 +14,43 @@
 
 | # | Кейс | Тип | Что внутри |
 |---|------|-----|-----------|
-| 1 | [Team Task Manager: ретроспективный анализ](docs/01-team-task-manager/README.md) | Реальный проект (мой backend) | Роли и права, FR/NFR, user stories + acceptance criteria, ER, state-диаграммы, sequence, фрагмент API-контракта, тест-кейсы |
-| 2 | [Система заявок на ТОиР (нефтегаз)](docs/02-cmms-maintenance/README.md) | Учебный, гипотетический | AS-IS / TO-BE, стейкхолдеры, процесс, требования, ER, статусы, интеграции, API, тест-кейсы, риски и открытые вопросы |
+| 1 | [AirTrace v2: телеметрия, алертинг, эксплуатация](docs/03-airtrace-telemetry/README.md) | Реальный production-проект автора (FastAPI + Postgres + Redis) | Полный цикл: ADR, FR/NFR → код → автотесты, SLO с порогами алертов, incident-Runbook, контракт API |
+| 2 | [Team Task Manager: ретроспективный анализ](docs/01-team-task-manager/README.md) | Реальный backend автора (Django 5 + DRF) | Матрица прав по `permissions.py`, FR/NFR, ER, state-диаграммы, sequence, API-контракт, трассировка «требование → тест → код» |
+| 3 | [Система заявок на ТОиР (нефтегаз)](docs/02-cmms-maintenance/README.md) | Учебный, гипотетический | AS-IS / TO-BE, стейкхолдеры, процесс, требования, ER, статусы, интеграции, API, тест-кейсы, риски |
+
+Кейс 1 — флагманский: он показывает связку навыков, которой обычно не хватает ни у «чистых» аналитиков, ни у «чистых» разработчиков — от формулировки требования до работающего мониторинга на проде.
 
 ## Какие навыки показывает репозиторий
 
-- Сбор и формализация требований: функциональные и нефункциональные, трассировка `BR → FR → TC`.
-- Моделирование: процессы (flowchart в стиле BPMN), ER, диаграммы состояний, sequence, use case.
-- Проектирование API: ресурсы, методы, коды ошибок, примеры запросов и ответов.
-- Acceptance criteria в формате Given / When / Then.
-- Тестовые сценарии и проверка полноты требований.
+- **Инженерия:** production-бэкенды (FastAPI, Django REST Framework), модульная архитектура с ADR, автотесты и контрактные тесты, CI, Docker-деплой, Sentry/метрики.
+- **Сбор и формализация требований:** функциональные и нефункциональные, трассировка `BR → FR → TC → код`.
+- **Моделирование:** ER, диаграммы состояний, sequence, use case, процессы в стиле BPMN.
+- **Проектирование API:** ресурсы, методы, коды ошибок, идемпотентность, примеры запросов и ответов.
+- **Эксплуатация как часть анализа:** NFR → SLO → метрики → пороги алертов → Runbook.
+- Acceptance criteria в формате Given / When / Then, подтверждённые автотестами.
 - Честная работа с допущениями: всё, что не подтверждено источником, помечено как гипотеза.
 
 ## Как читать
 
-Диаграммы написаны в [Mermaid](https://mermaid.js.org/) и отображаются прямо на GitHub. Каждый кейс самодостаточен: начинайте с раздела «Контекст», затем «Требования», остальное по интересу.
+Диаграммы написаны в [Mermaid](https://mermaid.js.org/) и отображаются прямо на GitHub. Каждый кейс самодостаточен: начинайте с раздела «Контекст», затем «Требования», остальное по интересу. В кейсах 1–2 ссылки ведут в открытые репозитории с кодом — любую строку документов можно сверить с реализацией.
 
 ## Структура
 
 ```text
-systems-analysis-portfolio/
+portfolio/
 ├── README.md
 ├── ROADMAP.md
-├── AGENTS.md
 └── docs/
-    ├── 01-team-task-manager/
-    │   └── README.md
-    └── 02-cmms-maintenance/
-        └── README.md
+    ├── 01-team-task-manager/    # кейс 2 в таблице (Django)
+    ├── 02-cmms-maintenance/     # кейс 3 в таблице (ТОиР)
+    └── 03-airtrace-telemetry/   # кейс 1 в таблице (флагман, FastAPI)
 ```
+
+## Связанные репозитории
+
+- [AirTrace-v2](https://github.com/f1sherFM/AirTrace-v2) — прод: nande.webhop.me
+- [Team_Task_Manager](https://github.com/f1sherFM/Team_Task_Manager) — Django 5 + DRF, CI с coverage-гейтом
+- [Профиль на GitHub](https://github.com/f1sherFM) — остальные проекты (интеграционный контур NANDE_Ecosystem, учебные и инструментальные репозитории)
 
 ## Статус
 
